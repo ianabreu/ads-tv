@@ -1,15 +1,49 @@
-import "./App.css";
-import { RouterProvider } from "react-router-dom";
-import { router } from "./routes/Router";
+import { createBrowserRouter } from "react-router-dom";
+import Home from "@/pages/home";
+import Fotos from "@/pages/fotos";
 
-function App() {
-  // const images = [
-  //   "https://cdn.pixabay.com/photo/2023/12/13/15/24/st-isaacs-cathedral-8447100_1280.jpg",
-  //   "https://media.istockphoto.com/id/1454773665/pt/foto/winter-in-st-petersburg.jpg?s=1024x1024&w=is&k=20&c=gDHrP7a_mHSLZ5djRMsy_r8PPAQ8kraBqschl9K7U5A=",
-  //   "https://media.istockphoto.com/id/1678211217/pt/foto/saint-isaacs-cathedral-and-spit-of-vasilievsky-island-seen-from-neva-river-dramatic-rainy.jpg?s=1024x1024&w=is&k=20&c=Y0H7lLgoUiPqDyyRaEC22s1FOMY0BGkgrl6RYUFSk14=",
-  // ];
+import Login from "@/pages/login";
+import Register from "@/pages/register";
 
-  return <RouterProvider router={router} />;
-}
+import { Layout } from "@/components/Layout";
+import { Private } from "@/routes/Private";
 
-export default App;
+import PageNotFound from "@/pages/error";
+
+const router = createBrowserRouter([
+  {
+    element: <Layout />,
+    children: [
+      {
+        path: "/",
+        element: (
+          <Private>
+            <Home />
+          </Private>
+        ),
+      },
+      {
+        path: "/fotos",
+        element: (
+          <Private>
+            <Fotos />
+          </Private>
+        ),
+      },
+    ],
+  },
+  {
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "/cadastro",
+    element: <Register />,
+  },
+  {
+    path: "*",
+    element: <PageNotFound />,
+  },
+]);
+
+export { router };
