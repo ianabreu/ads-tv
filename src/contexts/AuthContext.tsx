@@ -93,18 +93,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   async function signIn({ email, password }: SignInProps) {
-    try {
-      const { user } = await signInWithEmailAndPassword(auth, email, password);
-      handleInfoUser({
-        uid: user.uid,
-        email: user.email,
-        name: user.displayName,
-      });
-    } catch (error) {
-      console.log("ERRO AO LOGAR");
-      console.log(error);
-      throw new Error("Erro ao logar");
-    }
+    const { user } = await signInWithEmailAndPassword(auth, email, password);
+    handleInfoUser({
+      uid: user.uid,
+      email: user.email,
+      name: user.displayName,
+    });
   }
 
   function logout() {

@@ -9,6 +9,7 @@ import { Layout } from "@/components/Layout";
 import { Private } from "@/routes/Private";
 
 import PageNotFound from "@/pages/error";
+import Albuns from "./pages/albuns";
 
 const router = createBrowserRouter([
   {
@@ -24,6 +25,22 @@ const router = createBrowserRouter([
       },
       {
         path: "/fotos",
+        element: (
+          <Private>
+            <Fotos />
+          </Private>
+        ),
+      },
+      {
+        path: "/albuns",
+        element: (
+          <Private>
+            <Albuns />
+          </Private>
+        ),
+      },
+      {
+        path: "/albuns/:slug",
         element: (
           <Private>
             <Fotos />

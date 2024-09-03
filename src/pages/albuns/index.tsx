@@ -1,13 +1,15 @@
+import { AlbumItem } from "@/components/AlbumItem";
 import { Container } from "@/components/Container";
+import { EmptyList } from "@/components/EmptyList";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useApi } from "@/hooks/useApi";
+import { Plus } from "lucide-react";
 import { FormEvent } from "react";
-import { Link } from "react-router-dom";
 
-export default function Home() {
-  const { createAlbum, loading } = useApi();
+export default function Albuns() {
+  const { albuns, createAlbum, loading } = useApi();
 
   function handleCreate(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -21,8 +23,6 @@ export default function Home() {
   }
   return (
     <Container>
-      {/*Area upload*/}
-
       <form onSubmit={handleCreate}>
         <Input
           className="text-foreground"
@@ -34,24 +34,17 @@ export default function Home() {
           Cadastrar
         </Button>
       </form>
-      {/*Area lista de fotos*/}
-      {/* {listPhotos.length === 0 ? (
-        <EmptyList />
-      ) : (
-        <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 sm:grid-cols-3 gap-8 items-center ">
-            {listPhotos.map((photo, index) => (
-              <PhotoItem photo={photo} key={index} />
-            ))}
-          </div>
-          <PaginationPhoto />
-        </>
-      )} */}
-      <Link to={"/albuns"}>
-        <p className="bg-green-500 h-11 w-fit rounded p-4 flex items-center mt-5">
-          Albuns
-        </p>
-      </Link>
+      <div className="flex justify-between">
+        <h2 className="text-2xl font-bold my-2">Albuns</h2>
+        <Button variant={"default"} size={"sm"}>
+          {<Plus />} Novo Álbum
+        </Button>
+      </div>
+      {albuns.length === 0 && <EmptyList />}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+        {albuns.length != 0 &&
+          albuns.map((album) => <AlbumItem album={album} key={album.id} />)}
+      </div>
     </Container>
   );
 }

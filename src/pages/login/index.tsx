@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { FirebaseError } from "firebase/app";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -24,7 +25,9 @@ export default function Login() {
   const {
     register,
     handleSubmit,
+    setFocus,
     formState: { errors },
+    resetField,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     mode: "onSubmit",
@@ -36,8 +39,24 @@ export default function Login() {
       toast.success("Logado com sucesso!");
       navigate("/", { replace: true });
     } catch (error) {
-      console.log(error);
-      toast.error("Erro ao logar!");
+      if (error instanceof FirebaseError) {
+        if (error.code === "auth/invalid-password") {
+          toast.error("Senha Inválida");
+          resetField("password");
+          setFocus("password");
+          return;
+        }
+        if (error.code === "auth/invalid-credential") {
+          toast.error("Credenciais Inválidas");
+          resetField("password");
+          resetField("email");
+          setFocus("email");
+          return;
+        }
+        toast.error(error.code);
+      } else {
+        toast.error("Erro ao logar!");
+      }
     }
   }
   return (
