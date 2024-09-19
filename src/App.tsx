@@ -1,30 +1,46 @@
 import { createBrowserRouter } from "react-router-dom";
-import Home from "@/pages/home";
-import Fotos from "@/pages/fotos";
+import { Layout } from "@/components/layout";
+import { Private } from "@/routes/Private";
 
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 
-import { Layout } from "@/components/Layout";
-import { Private } from "@/routes/Private";
-
 import PageNotFound from "@/pages/error";
-import Albuns from "./pages/albuns";
+import Anuncios from "@/pages/anuncios";
+import Galeria from "@/pages/gallery";
+import Fotos from "@/pages/photos";
 
 const router = createBrowserRouter([
   {
     element: <Layout />,
     children: [
       {
-        path: "/",
+        path: "/", // Todos os anúncios, privado.
         element: (
           <Private>
-            <Home />
+            <Anuncios />
           </Private>
         ),
       },
       {
-        path: "/fotos",
+        path: "/galeria", // Todos os albums
+        element: (
+          <Private>
+            <Galeria />
+          </Private>
+        ),
+      },
+      {
+        path: "/albuns/:slug", // todas as fotos pertencentes ao album
+        element: (
+          <Private>
+            <Fotos />
+          </Private>
+        ),
+      },
+
+      {
+        path: "/anuncio/:slug/novo", // Novo Anuncio
         element: (
           <Private>
             <Fotos />
@@ -32,15 +48,7 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "/albuns",
-        element: (
-          <Private>
-            <Albuns />
-          </Private>
-        ),
-      },
-      {
-        path: "/albuns/:slug",
+        path: "/anuncio/:slug/editar", // Editar Anuncio
         element: (
           <Private>
             <Fotos />
@@ -48,6 +56,10 @@ const router = createBrowserRouter([
         ),
       },
     ],
+  },
+  {
+    path: "/anuncio/:slug", // Anuncio específico Reprodução, PUBLICO
+    element: <Fotos />,
   },
   {
     path: "/login",
