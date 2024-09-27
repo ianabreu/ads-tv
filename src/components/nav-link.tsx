@@ -11,6 +11,7 @@ export function NavLink({
   children,
   className,
   active,
+  onClick,
   ...LinkProps
 }: NavLinkProps) {
   return (
@@ -20,6 +21,7 @@ export function NavLink({
         "hover:text-amber-500 transition-colors duration-300 text-sm font-medium whitespace-nowrap flex",
         active && "text-amber-500"
       )}
+      onClick={onClick}
       {...LinkProps}
     >
       {children}
