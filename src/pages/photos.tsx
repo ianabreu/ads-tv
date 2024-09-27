@@ -1,81 +1,131 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { Container, SearchAndFilterRow, Title } from "@/components";
+import { useNavigate, useParams } from "react-router-dom";
+import { Container, Modal, Title } from "@/components";
 
-import { PhotoService } from "@/services/PhotoService";
-import { AlbumService } from "@/services/AlbumService";
-import { Photo } from "@/types";
 import { Grid } from "@/components/grid";
+import { NewPhoto } from "@/components/new-photo";
+import { PhotoItem } from "@/components/item-photo";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { useApi } from "@/hooks/useApi";
+import {
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Album, DB_NAME, Photo } from "@/types";
+import { AlbumService } from "@/services/AlbumService";
+import toast from "react-hot-toast";
 
 export default function Photos() {
-  const { slug } = useParams();
+  const { slug } = useParams() as { slug: string };
+  const { deletePhoto } = useApi();
+  const [loadedImages, setLoadedImages] = useState<string[]>([]);
+  const [album, setAlbum] = useState<Album>();
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [selectedAlbum] = useState<string | undefined>(slug);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [loadImages, setLoadImages] = useState<string[]>([]);
+  const [loadingPhotos, setLoadingPhotos] = useState<boolean>(true);
+  const [openNewPhoto, setOpenNewPhoto] = useState<boolean>(false);
+  const navigate = useNavigate();
+  useEffect(() => {
+    AlbumService.getBySlug(slug).then((album) => {
+      if (album) {
+        setAlbum(album);
+      } else {
+        toast.error("Álbum não encontrado");
+        navigate("/galeria", { replace: true });
+      }
+    });
+  }, [slug, navigate]);
 
   useEffect(() => {
-    async function fetchPhotos() {
-      if (!selectedAlbum) {
-        return;
-      }
-      try {
-        const { id } = await AlbumService.getBySlug(selectedAlbum);
+    if (album) {
+      const unsubscribe = onSnapshot(
+        query(
+          collection(db, DB_NAME.photos),
+          where("album_id", "==", album.id),
+          orderBy("createdAt", "desc")
+        ),
+        (querySnapshot) => {
+          const response: Photo[] = [];
 
-        const photoList = await PhotoService.getByAlbumId(id);
-        setPhotos(photoList);
-        setLoading(false);
-      } catch (error) {
-        console.log(error);
+          querySnapshot.forEach((doc) => {
+            response.push({
+              id: doc.id,
+              album_id: doc.data().album_id,
+              title: doc.data().title,
+              createdAt: doc.data().createdAt,
+              image_url: doc.data().image_url,
+            });
+          });
+          setPhotos(response);
+          setLoadingPhotos(false);
+        }
+      );
 
-        throw new Error("fetchAlbuns");
-      }
+      return () => {
+        unsubscribe();
+      };
     }
-    fetchPhotos();
-  }, [selectedAlbum]);
+  }, [album]);
 
-  function handleImageLoad(id: string) {
-    setLoadImages((prevImageloaded) => [...prevImageloaded, id]);
+  function handleCloseModal() {
+    setOpenNewPhoto(false);
   }
+  function handleOpenModal() {
+    setOpenNewPhoto(true);
+  }
+  async function handleDeletePhoto(photo_id: string) {
+    try {
+      await deletePhoto(photo_id);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  function handleImageLoad(id: string) {
+    setLoadedImages((prevImageloaded) => [...prevImageloaded, id]);
+  }
+  if (album) {
+    return (
+      <Container>
+        <Title>Fotos do Álbum: {album?.title}</Title>
+        <div className="my-2 text-right">
+          <Button
+            variant={"default"}
+            size={"sm"}
+            className="w-full md:max-w-40"
+            onClick={handleOpenModal}
+          >
+            {<Plus />} Adicionar Fotos
+          </Button>
+        </div>
+        <hr className="border-slate-700" />
 
-  return (
-    <Container>
-      <Title>Fotos</Title>
-      <SearchAndFilterRow filterOptions={["ian"]} onCreate={() => {}} />
-      <Grid loading={loading} isEmpty={photos.length < 1} emptyType="photo">
-        {photos.map((photo) => (
-          <Link to={photo.image_url} target="_blank" key={photo.id}>
-            <section className="w-full rounded-lg p-2 bg-slate-700">
-              <div
-                className="w-full rounded-lg h-auto aspect-square bg-slate-300"
-                style={{
-                  display: loadImages.includes(photo.id) ? "none" : "block",
-                }}
-              ></div>
-
-              <div
-                className="w-full rounded-lg mb-2 max-h-auto aspect-square transition-all overflow-hidden"
-                style={{
-                  display: loadImages.includes(photo.id) ? "block" : "none",
-                }}
-              >
-                <img
-                  src={photo.image_url || "./images/folder.png"}
-                  alt={photo.title}
-                  className="h-full w-full object-cover"
-                  onLoad={() => {
-                    handleImageLoad(photo.id);
-                  }}
-                />
-              </div>
-
-              <span className="text-sm mt-2 text-background text-ellipsis line-clamp-2">
-                {photo.title}
-              </span>
-            </section>
-          </Link>
-        ))}
-      </Grid>
-    </Container>
-  );
+        <Grid
+          loading={loadingPhotos}
+          isEmpty={photos.length < 1}
+          emptyType="photo"
+        >
+          {photos.map((photo) => (
+            <PhotoItem
+              key={photo.id}
+              loadedImages={loadedImages}
+              photo={photo}
+              onImageLoad={handleImageLoad}
+              deletePhoto={handleDeletePhoto}
+            />
+          ))}
+        </Grid>
+        <Modal
+          isOpen={openNewPhoto}
+          onClose={handleCloseModal}
+          header="Adicionar fotos"
+        >
+          <NewPhoto handleCloseModal={handleCloseModal} album_id={album.id} />
+        </Modal>
+      </Container>
+    );
+  }
 }
