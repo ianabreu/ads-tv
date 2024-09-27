@@ -26,33 +26,39 @@ interface ListAllAlbunsProps {
   order?: keyof Pick<Album, "title" | "createdAt">;
   limitSize?: number;
 }
-
+const albumCollection = collection(db, DB_NAME.albums);
 const AlbumService = {
   create: async ({ title, slug, userId }: CreateAlbumProps) => {
-    const alreadyExists = await AlbumService.getBySlug(slug);
-    if (alreadyExists) {
-      throw new Error("Álbum já cadastrado");
+    try {
+      const alreadyExists = await AlbumService.getBySlug(slug);
+      if (alreadyExists) {
+        throw new Error("Álbum já cadastrado");
+      }
+      const data: Pick<
+        Album,
+        "createdAt" | "cover" | "slug" | "title" | "user_id"
+      > = {
+        user_id: userId,
+        title,
+        slug,
+        cover: null,
+        createdAt: Timestamp.fromDate(new Date()),
+      };
+
+      const album = await addDoc(albumCollection, data);
+
+      const response: Album = {
+        id: album.id,
+        ...data,
+      };
+
+      return response;
+    } catch (error) {
+      console.log(error);
+      throw new Error(
+        error instanceof Error ? error.message : "Erro ao cadastrar"
+      );
     }
-    const albumRef = collection(db, DB_NAME.albums);
-    const data: Pick<
-      Album,
-      "createdAt" | "cover" | "slug" | "title" | "user_id"
-    > = {
-      user_id: userId,
-      title,
-      slug,
-      cover: null,
-      createdAt: Timestamp.fromDate(new Date()),
-    };
-
-    const album = await addDoc(albumRef, data);
-
-    const response: Album = {
-      id: album.id,
-      ...data,
-    };
-
-    return response;
   },
 
   getAll: async ({
@@ -63,7 +69,7 @@ const AlbumService = {
     const albuns: Album[] = [];
 
     const q = query(
-      collection(db, DB_NAME.albums),
+      albumCollection,
       where("user_id", "==", user_id),
       orderBy(order),
       limit(limitSize)
@@ -83,22 +89,26 @@ const AlbumService = {
   },
 
   getBySlug: async (slug: string) => {
-    const albumResponse: Album[] = [];
-    const album = collection(db, DB_NAME.albums);
-    const q = query(album, where("slug", "==", slug));
-    const querySnapshot = await getDocs(q);
-    querySnapshot.forEach((doc) => {
-      albumResponse.push({
-        id: doc.id,
-        user_id: doc.data().user_id,
-        title: doc.data().title,
-        slug: doc.data().slug,
-        cover: doc.data().cover,
-        createdAt: doc.data().createdAt,
-      });
-    });
-
-    return albumResponse[0];
+    try {
+      const querySnapshot = await getDocs(
+        query(albumCollection, where("slug", "==", slug))
+      );
+      if (querySnapshot.empty) {
+        return;
+      }
+      const albumResponse: Album = {
+        id: querySnapshot.docs[0].id as string,
+        user_id: querySnapshot.docs[0].data().user_id as string,
+        title: querySnapshot.docs[0].data().title as string,
+        slug: querySnapshot.docs[0].data().slug as string,
+        cover: querySnapshot.docs[0].data().cover as string,
+        createdAt: querySnapshot.docs[0].data().createdAt as Timestamp,
+      };
+      return albumResponse;
+    } catch (error) {
+      console.log(error);
+      return;
+    }
   },
   getById: async (album_id: string): Promise<Album | null> => {
     const albumRef = doc(db, DB_NAME.albums, album_id);
