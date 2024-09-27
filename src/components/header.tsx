@@ -18,7 +18,7 @@ export function Header() {
             </Link>
           </div>
           <div className="hidden md:block">
-            <Nav horizontal />
+            <Nav horizontal onClick={() => setIsOpen(false)} />
           </div>
           <div className="-mr-2 flex md:hidden">
             <Button onClick={() => setIsOpen(!isOpen)} size={"icon"}>
@@ -30,7 +30,7 @@ export function Header() {
 
       {isOpen && (
         <div className="md:hidden">
-          <Nav />
+          <Nav onClick={() => setIsOpen(false)} />
         </div>
       )}
     </header>
