@@ -7,9 +7,16 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   children?: ReactNode;
+  isDialog?: boolean;
 }
 
-export function Modal({ header, isOpen, onClose, children }: ModalProps) {
+export function Modal({
+  header,
+  isOpen,
+  onClose,
+  children,
+  isDialog = false,
+}: ModalProps) {
   const outsideRef = React.useRef(null);
 
   function handleCloseOnOverlay(e: React.MouseEvent<HTMLElement, MouseEvent>) {
@@ -32,9 +39,20 @@ export function Modal({ header, isOpen, onClose, children }: ModalProps) {
         onClick={handleCloseOnOverlay}
       />
       <div
-        className={
-          "relative w-4/5 p-4 box-border rounded-lg bg-slate-900 border border-slate-700 cursor-auto flex flex-col md:max-w-screen-md"
-        }
+        className={`
+          relative
+          p-4
+          box-border
+          bg-slate-900
+          border-slate-700
+          border
+          rounded-lg
+          cursor-auto
+          flex
+          flex-col
+          ${isDialog ? "w-auto" : "w-4/5"}
+          md:max-w-screen-md
+          `}
       >
         <div className={"flex"}>
           <button
