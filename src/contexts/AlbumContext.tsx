@@ -1,15 +1,18 @@
-import {
-  useState,
-  useEffect,
-  createContext,
-  ReactNode,
-  useCallback,
-} from "react";
+import { useState, useEffect, createContext, ReactNode } from "react";
 import { AlbumService } from "@/services/AlbumService";
 import { useAuth } from "@/hooks/useAuth";
 import { generateSlug } from "@/utils/generateSlug";
-import { Album } from "@/types";
+import { Album, DB_NAME, Photo } from "@/types";
 import toast from "react-hot-toast";
+import { PhotoService } from "@/services/PhotoService";
+import {
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 interface AlbumProviderProps {
   children: ReactNode;
@@ -21,7 +24,9 @@ export type AlbumContextData = {
   loadingAlbums: boolean;
   createAlbum: (title: string) => Promise<void>;
   deleteAlbum: (album_id: string) => Promise<void>;
-  fetchAlbums: () => Promise<void>;
+
+  photos: Photo[];
+  deletePhoto: (photo_id: string) => Promise<void>;
 };
 
 export const AlbumContext = createContext({} as AlbumContextData);
@@ -31,19 +36,37 @@ export function AlbumProvider({ children }: AlbumProviderProps) {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loadingAlbums, setLoadingAlbums] = useState<boolean>(true);
 
-  const fetchAlbums = useCallback(async () => {
-    try {
-      if (!user) return;
-      const albumList = await AlbumService.getAll({ user_id: user.id });
-      setAlbums(albumList);
-      setLoadingAlbums(false);
-    } catch (error) {
-      throw new Error("fetchAlbuns");
+  const [photos, setPhotos] = useState<Photo[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      const unsubscribe = onSnapshot(
+        query(
+          collection(db, DB_NAME.albums),
+          where("user_id", "==", user.id),
+          orderBy("title", "asc")
+        ),
+        (querySnapshot) => {
+          const response: Album[] = [];
+
+          querySnapshot.forEach((doc) => {
+            response.push({
+              id: doc.id,
+              user_id: doc.data().user_id,
+              title: doc.data().title,
+              createdAt: doc.data().createdAt,
+              cover: doc.data().cover,
+              slug: doc.data().slug,
+            });
+          });
+          setAlbums(response);
+          setLoadingAlbums(false);
+        }
+      );
+
+      return () => unsubscribe();
     }
   }, [user]);
-  useEffect(() => {
-    fetchAlbums();
-  }, [user, fetchAlbums]);
 
   async function createAlbum(title: string) {
     try {
@@ -72,7 +95,7 @@ export function AlbumProvider({ children }: AlbumProviderProps) {
       setAlbums(list);
       toast.success("Álbum deletado com sucesso.");
     } catch (error) {
-      console.log(error);
+      console.error(error);
       if (error instanceof Error) {
         toast.error(error.message);
         return;
@@ -81,15 +104,55 @@ export function AlbumProvider({ children }: AlbumProviderProps) {
     }
   }
 
+  {
+    /*Funções relacionadas a fotos*/
+  }
+
+  // const findPhotosByAlbumSlug = useCallback(async (album_slug: string) => {
+  //   setLoadingPhotos(true);
+  //   try {
+  //     const album = await AlbumService.getBySlug(album_slug);
+  //     if (!album) {
+  //       throw new Error("Álbum não encontrado");
+  //     }
+  //     const photoList = await PhotoService.getByAlbumId(album.id);
+  //     setPhotos(photoList);
+  //     return album.id;
+  //   } catch (error) {
+  //     console.log(error);
+  //     throw new Error(
+  //       error instanceof Error ? error.message : "Erro ao buscar fotos"
+  //     );
+  //   } finally {
+  //     setLoadingPhotos(false);
+  //   }
+  // }, []);
+
+  async function deletePhoto(photo_id: string) {
+    //Verificar se há foto nos anuncios
+    try {
+      await PhotoService.delete(photo_id);
+      setPhotos((prevPhotos) =>
+        prevPhotos.filter((photo) => photo.id !== photo_id)
+      );
+    } catch (error) {
+      console.log(error);
+      toast.error("Erro ao excluir foto.");
+    }
+  }
   return (
     <AlbumContext.Provider
       value={{
         albums,
         loadingAlbums,
         createAlbum,
-        fetchAlbums,
+
         setAlbums,
         deleteAlbum,
+
+        photos,
+
+        deletePhoto,
       }}
     >
       {children}
