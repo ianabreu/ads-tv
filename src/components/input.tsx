@@ -4,6 +4,7 @@ import {
   InputProps as InputFieldProps,
 } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { Label } from "./ui/label";
 
 interface InputProps extends InputFieldProps {
   name: string;
@@ -11,6 +12,7 @@ interface InputProps extends InputFieldProps {
   register: UseFormRegister<any>;
   error?: string;
   rules?: RegisterOptions;
+  label?: string;
 }
 
 export function Input({
@@ -21,10 +23,16 @@ export function Input({
   rules,
   error,
   className,
+  label,
   ...InputFieldProps
 }: InputProps) {
   return (
     <div className="w-full">
+      {label && (
+        <Label htmlFor={name} className="text-white text-sm mb-2">
+          {label}
+        </Label>
+      )}
       <InputField
         placeholder={placeholder}
         type={type}
