@@ -2,7 +2,7 @@ import { useState, useEffect, createContext, ReactNode } from "react";
 import { AlbumService } from "@/services/AlbumService";
 import { useAuth } from "@/hooks/useAuth";
 import { generateSlug } from "@/utils/generateSlug";
-import { Album, DB_NAME, Photo } from "@/types";
+import { Ads, Album, DB_NAME, Photo } from "@/types";
 import toast from "react-hot-toast";
 import { PhotoService } from "@/services/PhotoService";
 import {
@@ -27,6 +27,8 @@ export type AlbumContextData = {
 
   photos: Photo[];
   deletePhoto: (photo_id: string) => Promise<void>;
+  ads: Ads[];
+  loadingAds: boolean;
 };
 
 export const AlbumContext = createContext({} as AlbumContextData);
@@ -34,7 +36,9 @@ export const AlbumContext = createContext({} as AlbumContextData);
 export function AlbumProvider({ children }: AlbumProviderProps) {
   const { user } = useAuth();
   const [albums, setAlbums] = useState<Album[]>([]);
+  const [ads, setAds] = useState<Ads[]>([]);
   const [loadingAlbums, setLoadingAlbums] = useState<boolean>(true);
+  const [loadingAds, setLoadingAds] = useState<boolean>(true);
 
   const [photos, setPhotos] = useState<Photo[]>([]);
 
@@ -104,29 +108,7 @@ export function AlbumProvider({ children }: AlbumProviderProps) {
     }
   }
 
-  {
-    /*Funções relacionadas a fotos*/
-  }
-
-  // const findPhotosByAlbumSlug = useCallback(async (album_slug: string) => {
-  //   setLoadingPhotos(true);
-  //   try {
-  //     const album = await AlbumService.getBySlug(album_slug);
-  //     if (!album) {
-  //       throw new Error("Álbum não encontrado");
-  //     }
-  //     const photoList = await PhotoService.getByAlbumId(album.id);
-  //     setPhotos(photoList);
-  //     return album.id;
-  //   } catch (error) {
-  //     console.log(error);
-  //     throw new Error(
-  //       error instanceof Error ? error.message : "Erro ao buscar fotos"
-  //     );
-  //   } finally {
-  //     setLoadingPhotos(false);
-  //   }
-  // }, []);
+  /*Funções relacionadas a fotos*/
 
   async function deletePhoto(photo_id: string) {
     //Verificar se há foto nos anuncios
@@ -140,6 +122,39 @@ export function AlbumProvider({ children }: AlbumProviderProps) {
       toast.error("Erro ao excluir foto.");
     }
   }
+
+  /*Funcoes relacionadas a anúncios*/
+  useEffect(() => {
+    if (user) {
+      const unsubscribe = onSnapshot(
+        query(
+          collection(db, DB_NAME.ads),
+          where("user_id", "==", user.id),
+          orderBy("title", "asc")
+        ),
+        (querySnapshot) => {
+          const response: Ads[] = [];
+
+          querySnapshot.forEach((doc) => {
+            response.push({
+              id: doc.id,
+              user_id: doc.data().user_id,
+              title: doc.data().title,
+              created_at: doc.data().created_at,
+              slug: doc.data().slug,
+              draft: doc.data().draft,
+              durationSlide: doc.data().durationSlide,
+            });
+          });
+
+          setAds(response);
+          setLoadingAds(false);
+        }
+      );
+
+      return () => unsubscribe();
+    }
+  }, [user]);
   return (
     <AlbumContext.Provider
       value={{
@@ -153,6 +168,9 @@ export function AlbumProvider({ children }: AlbumProviderProps) {
         photos,
 
         deletePhoto,
+
+        ads,
+        loadingAds,
       }}
     >
       {children}
