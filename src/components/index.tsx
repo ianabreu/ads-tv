@@ -8,7 +8,6 @@ import { Layout } from "@/components/layout";
 import { Loading } from "@/components/loading";
 import { Nav } from "@/components/nav";
 import { NavLink } from "@/components/nav-link";
-import { SearchAndFilterRow } from "@/components/search-and-filter-row";
 import { SelectInput } from "@/components/select-input";
 import { Title } from "@/components/title";
 
@@ -25,7 +24,6 @@ export {
   Loading,
   Nav,
   NavLink,
-  SearchAndFilterRow,
   SelectInput,
   Title,
   Modal,
