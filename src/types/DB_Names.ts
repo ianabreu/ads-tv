@@ -3,4 +3,5 @@ export enum DB_NAME {
   photos = "photos",
   albums = "albums",
   ads = "ads",
+  slides = "slides",
 }
