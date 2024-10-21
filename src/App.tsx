@@ -9,6 +9,8 @@ import PageNotFound from "@/pages/error";
 import Anuncios from "@/pages/anuncios";
 import Galeria from "@/pages/gallery";
 import Fotos from "@/pages/photos";
+import EditarAnuncio from "./pages/editar-anuncio";
+import AssistirAnuncio from "./pages/assistir-anuncio";
 
 const router = createBrowserRouter([
   {
@@ -38,20 +40,11 @@ const router = createBrowserRouter([
           </Private>
         ),
       },
-
       {
-        path: "/anuncio/:slug/novo", // Novo Anuncio
+        path: "/editar/anuncio/:slug", // Editar Anuncio
         element: (
           <Private>
-            <Fotos />
-          </Private>
-        ),
-      },
-      {
-        path: "/anuncio/:slug/editar", // Editar Anuncio
-        element: (
-          <Private>
-            <Fotos />
+            <EditarAnuncio />
           </Private>
         ),
       },
@@ -59,7 +52,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/anuncio/:slug", // Anuncio específico Reprodução, PUBLICO
-    element: <Fotos />,
+    element: <AssistirAnuncio />,
   },
   {
     path: "/login",
