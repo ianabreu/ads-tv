@@ -60,6 +60,15 @@ export default function EditarAnuncio() {
         setIsOpenDialog(false);
       },
     },
+    {
+      title: "Deseja excluir todo o anúncio?",
+      confirmationText: "Excluir",
+      contentText: "Exta ação não poderá ser desfeita.",
+      onConfirm: () => {
+        deleteAds(anuncio.id);
+        setIsOpenDialog(false);
+      },
+    },
   ];
 
   const [dialogContent, setDialogContent] = useState<(typeof dialogSave)[0]>({
@@ -165,8 +174,10 @@ export default function EditarAnuncio() {
   function handleDeleteSlide(order: number) {
     setSlides(slides.filter((_, index) => index !== order));
   }
-  function handleOpenDialog(type: "draft" | "publish") {
-    setDialogContent(dialogSave[type === "publish" ? 1 : 0]);
+  function handleOpenDialog(type: "draft" | "publish" | "delete") {
+    setDialogContent(
+      dialogSave[type === "publish" ? 1 : type === "draft" ? 0 : 2]
+    );
     setIsOpenDialog(true);
   }
 
@@ -209,9 +220,31 @@ export default function EditarAnuncio() {
       setIsLoading(false);
     }
   }
+
+  async function deleteAds(ads_id: string) {
+    try {
+      await AdsService.delete(ads_id);
+      toast.success("Anúncio deletado com sucesso");
+      navigate("/", { replace: true });
+    } catch (error) {
+      toast.error("Erro ao deletar");
+    }
+  }
   return (
     <Container>
-      <Title>{anuncio.title}</Title>
+      <div className="flex sm:flex-row flex-col justify-between items-center">
+        <Title line={false}>{anuncio.title}</Title>
+        <Button
+          variant={"destructive"}
+          size={"xs"}
+          className="sm:mb-0 mb-2"
+          onClick={() => handleOpenDialog("delete")}
+        >
+          Deletar Anúncio
+        </Button>
+      </div>
+      <hr className="border-slate-700" />
+
       <div className="flex sm:flex-row flex-col w-full gap-2 my-2 justify-end">
         <Button
           variant={"default"}

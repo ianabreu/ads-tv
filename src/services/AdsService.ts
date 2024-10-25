@@ -183,4 +183,23 @@ export const AdsService = {
       }
     }
   },
+  delete: async (ads_id: string) => {
+    try {
+      const slidesCollection = collection(
+        db,
+        DB_NAME.ads,
+        ads_id,
+        DB_NAME.slides
+      );
+      const querySnapshot = await getDocs(query(slidesCollection));
+      querySnapshot.forEach(async (document) => {
+        await deleteDoc(
+          doc(db, DB_NAME.ads, ads_id, DB_NAME.slides, document.id)
+        );
+      });
+      await deleteDoc(doc(db, DB_NAME.ads, ads_id));
+    } catch (error) {
+      console.log(error);
+    }
+  },
 };
