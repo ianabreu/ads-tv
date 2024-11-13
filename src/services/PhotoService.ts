@@ -54,7 +54,7 @@ const PhotoService = {
         file,
         1920,
         1080,
-        "webp",
+        "png",
         80,
         0,
         (uri) => {
@@ -128,7 +128,7 @@ const PhotoService = {
         storage,
         `images/${photo.album_id}/${photo.album_id}-${photo.createdAt
           .toDate()
-          .getTime()}.webp`
+          .getTime()}.png`
       );
       deleteObject(storageRef).then(async () => {
         const photoRef = doc(db, DB_NAME.photos, photo_id);
